@@ -1,2 +1,17 @@
-# Budget-Tracking-
-A responsive budgeting application that allows users to track income and expenses, filter transactions by category and month, visualize financial data with Chart.js, and export data as CSV. Built using vanilla JavaScript with LocalStorage for persistent data management and dark mode support.
+# Budget Tracking App
+
+A responsive budgeting application built with vanilla JavaScript.
+
+## Features
+- Add income and expenses
+- Filter by category and month
+- Interactive charts using Chart.js
+- Dark mode toggle
+- CSV export
+- LocalStorage persistence
+
+## Tech Stack
+- HTML5
+- CSS3 (Flexbox, Responsive Design)
+- JavaScript (DOM manipulation, LocalStorage)
+- Chart.js
