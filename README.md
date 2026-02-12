@@ -15,3 +15,6 @@ A responsive budgeting application built with vanilla JavaScript.
 - CSS3 (Flexbox, Responsive Design)
 - JavaScript (DOM manipulation, LocalStorage)
 - Chart.js
+
+## Live Demo
+https://jefferspin669.github.io/Budget-Tracking-/
