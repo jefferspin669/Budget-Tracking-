@@ -1,172 +1,273 @@
-const form = document.getElementById('transaction-form');
-const list = document.getElementById('transaction-list');
-const totalEl = document.getElementById('total');
-const incomeEl = document.getElementById('income');
-const expenseEl = document.getElementById('expense');
+let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
+let darkMode = JSON.parse(localStorage.getItem("darkMode")) || false;
 
-const categoryFilter = document.getElementById('category-filter');
-const monthPicker = document.getElementById('month-picker');
-const chartToggle = document.getElementById('chart-toggle');
-const themeToggle = document.getElementById('theme-toggle');
-const exportBtn = document.getElementById('export-csv');
+let breakdownChart;
+let savingsChart;
 
-const desc = document.getElementById('desc');
-const amount = document.getElementById('amount');
-const type = document.getElementById('type');
-const category = document.getElementById('category');
-const dateInput = document.getElementById('date');
+const saveBtn = document.getElementById("saveBtn");
+const exportBtn = document.getElementById("exportBtn");
+const darkToggle = document.getElementById("darkToggle");
 
-let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
-let chartType = 'line';
-let chart, pieChart;
+saveBtn.addEventListener("click", addTransaction);
+exportBtn.addEventListener("click", exportCSV);
+darkToggle.addEventListener("click", toggleDarkMode);
 
-const save = () =>
-    localStorage.setItem('transactions', JSON.stringify(transactions));
+if (darkMode) document.body.classList.add("dark");
 
-const filtered = () =>
-    transactions.filter(t =>
-        (!monthPicker.value || t.date.startsWith(monthPicker.value)) &&
-        (categoryFilter.value === 'all' || t.category === categoryFilter.value)
-    );
-
-// Add transaction
-form.addEventListener('submit', e => {
-    e.preventDefault();
-
-    transactions.push({
-        id: Date.now(),
-        description: desc.value,
-        amount: +amount.value,
-        type: type.value,
-        category: category.value,
-        date: dateInput.value
-    });
-
-    save();
-    form.reset();
-    dateInput.valueAsDate = new Date();
-    render();
-});
-
-// Delete
-function deleteTransaction(id) {
-    transactions = transactions.filter(t => t.id !== id);
-    save();
-    render();
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode",
+    document.body.classList.contains("dark"));
 }
 
-// List
-function renderList() {
-    list.innerHTML = '';
-    filtered().forEach(t => {
-        const li = document.createElement('li');
-        li.className = t.type;
-        li.innerHTML = `
-            <span>${t.description} (${t.category})</span>
-            <span>
-                ${t.type === 'expense' ? '-' : '+'}$${t.amount.toFixed(2)}
-                <button class="delete-btn">X</button>
-            </span>
-        `;
-        li.querySelector('button').onclick = () => deleteTransaction(t.id);
-        list.appendChild(li);
-    });
+function save() {
+  localStorage.setItem("transactions",
+    JSON.stringify(transactions));
 }
 
-// Balance
-function renderBalance() {
-    let income = 0, expense = 0;
-    filtered().forEach(t =>
-        t.type === 'income' ? income += t.amount : expense += t.amount
-    );
+function addTransaction() {
+  const description = document.getElementById("description").value.trim();
+  const amount = parseFloat(document.getElementById("amount").value);
+  const type = document.getElementById("type").value;
+  const date = document.getElementById("date").value;
+  const recurring = document.getElementById("recurring").value;
+  const recurringEnd = document.getElementById("recurringEnd").value;
 
-    incomeEl.textContent = `$${income.toFixed(2)}`;
-    expenseEl.textContent = `$${expense.toFixed(2)}`;
-    totalEl.textContent = `$${(income - expense).toFixed(2)}`;
+  if (!description || isNaN(amount) || !date) {
+    alert("Please fill all required fields correctly.");
+    return;
+  }
+
+  transactions.push({
+    id: Date.now(),
+    description,
+    amount,
+    type,
+    date,
+    recurring,
+    recurringEnd: recurringEnd || null,
+    active: true,
+    parentId: null
+  });
+
+  save();
+  render();
 }
-
-// Categories
-function renderCategories() {
-    const cats = [...new Set(transactions.map(t => t.category))];
-    categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
-    cats.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c;
-        o.textContent = c;
-        categoryFilter.appendChild(o);
-    });
-}
-
-// Monthly chart
-function renderChart() {
-    const data = {};
-    filtered().forEach(t => {
-        const m = new Date(t.date).toLocaleString('default', { month: 'short', year: 'numeric' });
-        if (!data[m]) data[m] = { income: 0, expense: 0 };
-        data[m][t.type] += t.amount;
-    });
-
-    if (chart) chart.destroy();
-    chart = new Chart(document.getElementById('chart'), {
-        type: chartType,
-        data: {
-            labels: Object.keys(data),
-            datasets: [
-                { label: 'Income', data: Object.values(data).map(d => d.income), backgroundColor: '#27ae60' },
-                { label: 'Expense', data: Object.values(data).map(d => d.expense), backgroundColor: '#c0392b' }
-            ]
-        }
-    });
-}
-
-// Pie chart
-function renderPie() {
-    const data = {};
-    filtered().forEach(t => data[t.category] = (data[t.category] || 0) + t.amount);
-
-    if (pieChart) pieChart.destroy();
-    pieChart = new Chart(document.getElementById('pie-chart'), {
-        type: 'pie',
-        data: {
-            labels: Object.keys(data),
-            datasets: [{
-                data: Object.values(data),
-                backgroundColor: Object.keys(data).map((_, i) => `hsl(${i * 60},70%,60%)`)
-            }]
-        }
-    });
-}
-
-// CSV
-exportBtn.onclick = () => {
-    if (!transactions.length) return;
-    const rows = [['Date','Desc','Cat','Type','Amount'],
-        ...transactions.map(t => [t.date,t.description,t.category,t.type,t.amount])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'budget.csv';
-    a.click();
-};
-
-// Controls
-chartToggle.onclick = () => {
-    chartType = chartType === 'line' ? 'bar' : 'line';
-    chartToggle.textContent = chartType === 'line' ? 'Switch to Bar' : 'Switch to Line';
-    renderChart();
-};
-
-themeToggle.onclick = () => document.body.classList.toggle('dark');
-categoryFilter.onchange = render;
-monthPicker.onchange = render;
 
 function render() {
-    renderList();
-    renderBalance();
-    renderCategories();
-    renderChart();
-    renderPie();
+  generateRecurring();
+  renderTransactions();
+  renderBalance();
+  renderProjected();
+  renderCharts();
+  renderInsights();
 }
 
-dateInput.valueAsDate = new Date();
+function renderTransactions() {
+  const list = document.getElementById("transactionList");
+  list.innerHTML = "";
+
+  transactions.forEach(t => {
+    const div = document.createElement("div");
+    div.className = "transaction";
+
+    div.innerHTML = `
+      <span class="${t.type}">
+        ${t.description} - $${t.amount.toFixed(2)} (${t.date})
+      </span>
+      <span>
+        <button onclick="deleteTransaction(${t.id})">Delete</button>
+        ${t.recurring !== "none" && !t.parentId && t.active
+          ? `<button onclick="stopRecurring(${t.id})">Stop</button>`
+          : ""}
+      </span>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function deleteTransaction(id) {
+  transactions = transactions.filter(t => t.id !== id);
+  save();
+  render();
+}
+
+function stopRecurring(id) {
+  const t = transactions.find(x => x.id === id);
+  if (t) t.active = false;
+  save();
+  render();
+}
+
+function renderBalance() {
+  const total = transactions.reduce((sum, t) =>
+    t.type === "income" ? sum + t.amount : sum - t.amount
+  , 0);
+
+  document.getElementById("balance").innerText =
+    total.toFixed(2);
+}
+
+function renderProjected() {
+  const future = new Date();
+  future.setDate(future.getDate() + 30);
+
+  const projected = transactions.reduce((sum, t) => {
+    if (new Date(t.date) <= future)
+      return t.type === "income" ? sum + t.amount : sum - t.amount;
+    return sum;
+  }, 0);
+
+  document.getElementById("projected").innerText =
+    projected.toFixed(2);
+}
+
+function generateRecurring() {
+  const today = new Date();
+
+  transactions.forEach(original => {
+    if (!original.active ||
+        original.recurring === "none" ||
+        original.parentId) return;
+
+    let next = new Date(original.date);
+    const end = original.recurringEnd
+      ? new Date(original.recurringEnd)
+      : null;
+
+    while (next <= today) {
+
+      if (end && next > end) break;
+
+      const dateStr = next.toISOString().slice(0,10);
+
+      const exists = transactions.some(t =>
+        t.parentId === original.id &&
+        t.date === dateStr
+      );
+
+      if (!exists && next > new Date(original.date)) {
+        transactions.push({
+          ...original,
+          id: Date.now() + Math.random(),
+          parentId: original.id,
+          date: dateStr
+        });
+      }
+
+      if (original.recurring === "weekly")
+        next.setDate(next.getDate() + 7);
+      else if (original.recurring === "biweekly")
+        next.setDate(next.getDate() + 14);
+      else
+        next.setMonth(next.getMonth() + 1);
+    }
+  });
+
+  save();
+}
+
+function renderCharts() {
+  const income = transactions
+    .filter(t => t.type === "income")
+    .reduce((s,t)=>s+t.amount,0);
+
+  const expense = transactions
+    .filter(t => t.type === "expense")
+    .reduce((s,t)=>s+t.amount,0);
+
+  if (breakdownChart) breakdownChart.destroy();
+  breakdownChart = new Chart(
+    document.getElementById("breakdownChart"),
+    {
+      type: "doughnut",
+      data: {
+        labels: ["Income","Expense"],
+        datasets: [{ data: [income, expense] }]
+      }
+    }
+  );
+
+  const sorted = [...transactions]
+    .sort((a,b)=>new Date(a.date)-new Date(b.date));
+
+  let running = 0;
+  const labels = [];
+  const data = [];
+
+  sorted.forEach(t=>{
+    running += t.type==="income"?t.amount:-t.amount;
+    labels.push(t.date);
+    data.push(running);
+  });
+
+  if (savingsChart) savingsChart.destroy();
+  savingsChart = new Chart(
+    document.getElementById("savingsChart"),
+    {
+      type: "line",
+      data: {
+        labels,
+        datasets: [{ label:"Balance", data }]
+      }
+    }
+  );
+}
+
+function renderInsights() {
+  const container =
+    document.getElementById("insights");
+  container.innerHTML = "";
+
+  const income = transactions
+    .filter(t=>t.type==="income")
+    .reduce((s,t)=>s+t.amount,0);
+
+  const expense = transactions
+    .filter(t=>t.type==="expense")
+    .reduce((s,t)=>s+t.amount,0);
+
+  const text = income > expense
+    ? "💰 You're saving money overall."
+    : "⚠️ You're spending more than you earn.";
+
+  const div = document.createElement("div");
+  div.className = "insight-card";
+  div.innerText = text;
+
+  container.appendChild(div);
+}
+
+function exportCSV() {
+  const rows =
+    [["Description","Amount","Type","Date"]];
+
+  transactions.forEach(t=>{
+    rows.push([
+      t.description,
+      t.amount,
+      t.type,
+      t.date
+    ]);
+  });
+
+  const csv =
+    rows.map(r=>r.join(",")).join("\n");
+
+  const blob =
+    new Blob([csv],{type:"text/csv"});
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const a =
+    document.createElement("a");
+
+  a.href = url;
+  a.download = "transactions.csv";
+  a.click();
+}
+
 render();
+
