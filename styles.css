@@ -1,123 +1,62 @@
-/* Base */
+:root {
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --text: #222;
+}
+
+body.dark {
+  --bg: #1f1f28;
+  --card: #2c2c38;
+  --text: #f5f5f5;
+}
+
 body {
-    font-family: 'Segoe UI', sans-serif;
-    background: #f4f4f4;
-    margin: 0;
-    color: #333;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  margin: 0;
+  transition: 0.3s ease;
 }
 
-header {
-    background: #2c3e50;
-    color: white;
-    padding: 20px;
-    text-align: center;
-    position: relative;
+.container {
+  max-width: 1000px;
+  margin: auto;
 }
 
-.header-buttons {
-    position: absolute;
-    right: 20px;
-    top: 20px;
+.card {
+  background: var(--card);
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  transition: 0.3s ease;
 }
 
-main {
-    max-width: 700px;
-    margin: 30px auto;
-    padding: 0 15px;
+input, select, button {
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-section {
-    background: white;
-    padding: 20px;
-    margin-bottom: 25px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+button {
+  cursor: pointer;
 }
 
-section h2 { margin-top: 0; }
-
-/* Form */
-form input, form select, form button {
-    padding: 10px;
-    margin: 5px 5px 10px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
+.transaction {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #ddd;
 }
 
-form button {
-    background-color: #2c3e50;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-}
+.income { color: green; }
+.expense { color: red; }
 
-form button:hover {
-    background-color: #34495e;
-    transform: translateY(-2px);
+.insight-card {
+  padding: 8px;
+  margin-bottom: 6px;
+  border-left: 4px solid #4CAF50;
+  background: var(--card);
+  border-radius: 6px;
 }
-
-/* Filters */
-.filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-}
-
-button#export-csv {
-    background-color: #2980b9;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-}
-button#export-csv:hover { background-color: #3498db; transform: translateY(-2px); }
-
-button#chart-toggle {
-    background-color: #16a085;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-bottom: 10px;
-}
-button#chart-toggle:hover { background-color: #1abc9c; transform: translateY(-2px); }
-
-/* List */
-ul { list-style: none; padding: 0; }
-li {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    background: #f9f9f9;
-}
-li.income { border-left: 5px solid #27ae60; }
-li.expense { border-left: 5px solid #c0392b; }
-.delete-btn {
-    background: #c0392b;
-    color: white;
-    border: none;
-    padding: 5px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-/* Chart */
-canvas { width: 100% !important; height: 300px !important; display: block; margin: auto; }
-
-/* Dark Mode */
-.dark { background: #121212; color: #e0e0e0; }
-.dark section { background: #1e1e1e; }
-.dark li { background: #2a2a2a; }
-.dark form button { background-color: #444; }
-.dark form button:hover { background-color: #555; }
-.dark button#export-csv { background-color: #1f618d; }
-.dark button#export-csv:hover { background-color: #2874a6; }
-.dark button#chart-toggle { background-color: #117a65; }
-.dark button#chart-toggle:hover { background-color: #138d75; }
